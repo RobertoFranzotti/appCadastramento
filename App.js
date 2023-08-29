@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,15 +9,45 @@ import {
   Alert,
 } from "react-native";
 import Feather from "@expo/vector-icons/Feather";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function App() {
   const [name, setName] = useState("");
   const [names, setNames] = useState([]);
+  const dataBase = "@names"
 
-  function handleAddNewName() {
+  useEffect(() => {
+    AsyncStorage.getItem(dataBase).then((response) => {
+      if (response !== null) {
+        const storageParsed =JSON.parse(response)
+
+        setNames(storageParsed);
+      }
+    })
+
+  },[]);
+
+  async function handleAddNewName() {
     setNames((prevState) => [...prevState, name]);
+
+    const storage = await AsyncStorage.getItem(dataBase);
+
+        if (storage !== null) {
+          const storageParsed = JSON.parse(storage);
+
+          await AsyncStorage.setItem(
+            dataBase,
+            JSON.stringify([ ...storageParsed, name])
+          )
+        } else {
+          await AsyncStorage.setItem(
+            dataBase,
+            JSON.stringify([...names, name])
+          );
+          
+        }
   }
-  function handleRemoveName(nameToRemove) {
+   function handleRemoveName(nameToRemove) {
     Alert.alert(
         "Remover",
         `Remover o ${nameToRemove}?`,
@@ -33,8 +63,12 @@ export default function App() {
                     setNames(updatedNames);
                 }
             }
-        ],
+        ],     
+
+
         { cancelable: false } 
+
+        
     );
 }
     
